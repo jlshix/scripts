@@ -80,4 +80,6 @@ TODO:
 - `argparse` 参数处理
 - 更清晰的程序逻辑 
 
-本程序的源码在 [Github](https://github.com/jlshix/scripts/blob/master/post_readme/postmd.py), 欢迎交流.
+本程序的源码在 [Github](https://github.com/jlshix/scripts/blob/dc0314948ec84073b83db4b2958bfcb285ff488b/post_readme/postmd.py), 欢迎交流.
+
+之后的改进可参见同目录的其它 md 文件.
