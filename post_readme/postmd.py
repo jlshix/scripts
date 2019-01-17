@@ -4,12 +4,16 @@
 import os
 import sys
 import logging
+import shlex
+import subprocess
 from textwrap import dedent
 from getopt import getopt
 from datetime import datetime
 
 import requests
 
+domain = 'http://leoshi.me'
+server = 'http://jlshix.com:4000'
 
 def usage():
     '''print the usage of this script'''
@@ -30,6 +34,32 @@ def usage():
     print(usage)
 
 
+def shell(command: str) -> str:
+    """exec shell command and return output string"""
+    logging.info('running `{}`...'.format(command))
+    return subprocess.check_output(shlex.split(command)).decode().strip('\n')
+
+
+def deploy(clean=False, preview=False):
+    '''deploy to github pages'''
+    if clean:
+        shell('hexo clean')
+    shell('hexo g')
+    if preview:
+        shell('hexo s')
+        logging.info('start server at {}, ctrl+c to stop server'.format(server))
+        choice = input('would you like to deploy on {} ? (yes/no, default yes)'.format(domain))
+        if choice.startswith('n'):
+            logging.info('exit because you choosed no')
+            return
+        elif choice != '\n' or not choice.startswith('y'):
+            logging.info('exit because of unknown choice')
+            return
+    logging.info('start deploying...')
+    shell('hexo d')
+    logging.info('deployed')
+
+    
 def make_header(title, date, tags, categories) -> str:
     '''assemble hexo article header using given params'''
     template = dedent('''\
@@ -48,9 +78,8 @@ def make_header(title, date, tags, categories) -> str:
     return header
 
 
-def hexo_new(opts: list, args: list) -> str:
+def hexo_new(opts: list, uri: str) -> str:
     '''generate hexo article by extracting params from opts and args parsed by getopt'''
-    uri = args[0]
 
     # get file content from github or local directory
     if uri.startswith('https://raw.githubusercontent.com'):
@@ -90,16 +119,16 @@ def hexo_new(opts: list, args: list) -> str:
 def main():
     logging.basicConfig(level=logging.DEBUG, format=' %(levelname)s: %(message)s')
 
-    # check argv
-    if len(sys.argv) < 6:
-        logging.error('args not enough')
-        usage()
-        exit(-1)
     # get argv
     opts, args = getopt(sys.argv[1:], 't:c:d:')
     
     # generate article
-    hexo_new(opts, args)
+    if not args:
+        logging.error('please specify a file uri')
+        usage()
+        exit(-2)
+    hexo_new(opts, args[0])
+    deploy()
     
 
 if __name__ == '__main__':
